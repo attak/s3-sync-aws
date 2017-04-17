@@ -23,7 +23,6 @@ function s3syncer(db, options) {
   options.cacheSrc = options.cacheSrc || __dirname + '/.sync'
   options.cacheDest = options.cacheDest || '/.sync'
   options.retries = options.retries || 7
-  options.acl = options.acl || 'public-read'
   options.force = !!options.force
   options.accessKeyId = options.accessKeyId || options.key
   options.secretAccessKey = options.secretAccessKey || options.secret
