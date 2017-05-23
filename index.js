@@ -59,7 +59,7 @@ function s3syncer(db, options) {
 
     relative = relative.replace(/\\/g, '/')
 
-    var destination =
+    var destination = options.endpoint ||
           protocol + '://'
         + subdomain
         + '.amazonaws.com/'
