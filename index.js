@@ -90,7 +90,13 @@ function s3syncer(db, options) {
     })
 
     function checkForUpload(next) {
-      client.headObject({Bucket: options.bucket, Key: relative}, function(err, res) {
+      client.headObject({Bucket: options.bucket, Key: relative})
+        .build(function() {
+          if (options.endpoint) {
+            this.httpRequest.endpoint.hostname = url.parse(options.endpoint).hostname
+            this.httpRequest.endpoint.host = url.parse(options.endpoint).host
+          }
+        }).send(function(err, res) {
         if (err && err.statusCode !== 404) return next(err)
         if (err && err.statusCode === 404) return uploadFile(details, next)
         if (
@@ -128,16 +134,22 @@ function s3syncer(db, options) {
         Body: fs.createReadStream(absolute)
       }, options.headers)
 
-      client.putObject(params, function(err, res) {
-        if (err) {
-          err = new Error('Bad status code: ' + err.statusCode)
-        } else {
-          return next(null, details)
-        }
+      client.putObject(params)
+        .build(function() {
+          if (options.endpoint) {
+            this.httpRequest.endpoint.hostname = url.parse(options.endpoint).hostname
+            this.httpRequest.endpoint.host = url.parse(options.endpoint).host
+          }
+        }).send(function(err, res) {
+          if (err) {
+            err = new Error('Bad status code: ' + err.statusCode)
+          } else {
+            return next(null, details)
+          }
 
-        lasterr = err
-        stream.emit('fail', err)
-        off.backoff()
+          lasterr = err
+          stream.emit('fail', err)
+          off.backoff()
       })
     }).backoff()
   }
@@ -148,7 +160,12 @@ function s3syncer(db, options) {
     client.getObject({
       Bucket: options.bucket,
       Key: options.cacheDest
-    }, function(err, res) {
+    }).build(function() {
+      if (options.endpoint) {
+        this.httpRequest.endpoint.hostname = url.parse(options.endpoint).hostname
+        this.httpRequest.endpoint.host = url.parse(options.endpoint).host
+      }
+    }).send(function(err, res) {
       if (err && err.statusCode !== 404) return callback(err)
       if (err && err.statusCode === 404) return callback(null)
 
@@ -174,7 +191,12 @@ function s3syncer(db, options) {
           Bucket: options.bucket,
           Key: options.cacheDest,
           Body: fs.createReadStream(options.cacheSrc)
-        }, function(err) {
+        }).build(function() {
+          if (options.endpoint) {
+            this.httpRequest.endpoint.hostname = url.parse(options.endpoint).hostname
+            this.httpRequest.endpoint.host = url.parse(options.endpoint).host
+          }
+        }).send(function(err) {
           if (err) return callback(err)
           fs.unlink(options.cacheSrc, callback)
         })
